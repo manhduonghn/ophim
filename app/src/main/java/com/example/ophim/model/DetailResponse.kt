@@ -13,10 +13,12 @@ data class MovieDetail(
     val name: String,
     val content: String,
     val poster_url: String,
-    val year: Int?,
-    val lang: String?,
-    val quality: String?,
-    val time: String?,
+
+    // ===== BỔ SUNG =====
+    val year: Int?,          // năm phát hành
+    val lang: String?,      // Vietsub / Lồng tiếng
+    val quality: String?,   // HD / CAM / FullHD
+    val time: String?,      // thời lượng (vd: 45 phút)
 
     val episodes: List<Server>
 )
