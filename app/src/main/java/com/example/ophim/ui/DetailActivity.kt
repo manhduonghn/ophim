@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.ophim.R
 import com.example.ophim.api.RetrofitClient
 import com.example.ophim.databinding.ActivityDetailBinding
@@ -36,23 +37,25 @@ class DetailActivity : AppCompatActivity() {
                 val movie = response.data.item
                 currentMovie = movie
 
-                // ===== HIỂN THỊ THÔNG TIN =====
+                // ===== INFO =====
                 binding.tvName.text = movie.name
 
                 binding.tvContent.text =
                     Html.fromHtml(movie.content, Html.FROM_HTML_MODE_COMPACT)
 
-                // Poster
+                binding.tvInfo.text =
+                    "${movie.year ?: ""} • ${movie.quality ?: ""} • ${movie.lang ?: ""}"
+
+                // ===== IMAGE =====
                 val imgUrl =
                     "https://img.ophim.live/uploads/movies/${movie.poster_url ?: ""}"
 
                 Glide.with(this@DetailActivity)
                     .load(imgUrl)
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .placeholder(android.R.drawable.progress_horizontal)
+                    .error(android.R.drawable.stat_notify_error)
                     .into(binding.imgPoster)
-
-                // Info phim (năm + chất lượng + ngôn ngữ)
-                binding.tvInfo.text =
-                    "${movie.year} • ${movie.quality ?: ""} • ${movie.lang ?: ""}"
 
                 // ===== LABEL =====
                 if (movie.episodes.firstOrNull()?.server_data?.size == 1) {
@@ -61,7 +64,7 @@ class DetailActivity : AppCompatActivity() {
                     binding.labelEpisodes.text = "Danh sách tập"
                 }
 
-                // ===== NÚT PLAY =====
+                // ===== PLAY BUTTON =====
                 binding.btnPlay.setOnClickListener {
                     val first = movie.episodes
                         .getOrNull(selectedServerIndex)
@@ -69,7 +72,10 @@ class DetailActivity : AppCompatActivity() {
                         ?.firstOrNull()
 
                     if (first != null) {
-                        val intent = Intent(this@DetailActivity, PlayerActivity::class.java)
+                        val intent = Intent(
+                            this@DetailActivity,
+                            PlayerActivity::class.java
+                        )
                         intent.putExtra("url", first.link_m3u8)
                         startActivity(intent)
                     } else {
@@ -81,32 +87,29 @@ class DetailActivity : AppCompatActivity() {
                     }
                 }
 
-                // ===== RENDER SERVER + TẬP =====
                 renderServers(movie)
                 updateEpisodes()
 
             } catch (e: Exception) {
                 Toast.makeText(
                     this@DetailActivity,
-                    "Lỗi: ${e.message}",
+                    e.message ?: "Lỗi không xác định",
                     Toast.LENGTH_LONG
                 ).show()
             }
         }
     }
 
-    // ===== SERVER UI =====
     private fun renderServers(movie: MovieDetail) {
         binding.layoutServers.removeAllViews()
 
         movie.episodes.forEachIndexed { index, server ->
-
-            val btn = TextView(this).apply {
+            val btn = TextView(this@DetailActivity).apply {
                 text = server.server_name
                 setPadding(40, 16, 40, 16)
                 setTextColor(resources.getColor(android.R.color.white))
 
-                background = getDrawable(
+                setBackgroundResource(
                     if (index == selectedServerIndex)
                         R.drawable.bg_server_selected
                     else
@@ -130,21 +133,21 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
-    // ===== UPDATE EPISODE =====
     private fun updateEpisodes() {
         val movie = currentMovie ?: return
 
         val listEpisode =
-            movie.episodes
-                .getOrNull(selectedServerIndex)
-                ?.server_data ?: emptyList()
+            movie.episodes.getOrNull(selectedServerIndex)?.server_data ?: emptyList()
 
         binding.rvEpisodes.layoutManager =
-            GridLayoutManager(this, 4)
+            GridLayoutManager(this@DetailActivity, 4)
 
         binding.rvEpisodes.adapter =
             EpisodeAdapter(listEpisode) { episode ->
-                val intent = Intent(this, PlayerActivity::class.java)
+                val intent = Intent(
+                    this@DetailActivity,
+                    PlayerActivity::class.java
+                )
                 intent.putExtra("url", episode.link_m3u8)
                 startActivity(intent)
             }
