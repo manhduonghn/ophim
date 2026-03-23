@@ -19,7 +19,7 @@
         <activity
             android:name=".ui.DetailActivity"
             android:exported="false"
-            android:screenOrientation="portrait"/> <activity
+            android:screenOrientation="unspecified"/> <activity
             android:name=".ui.PlayerActivity"
             android:exported="false"
             android:screenOrientation="landscape" 
