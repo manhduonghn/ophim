@@ -13,6 +13,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.ophim.R
 import com.example.ophim.api.RetrofitClient
+import com.example.ophim.adapter.EpisodeAdapter
 import com.example.ophim.databinding.ActivityDetailBinding
 import com.example.ophim.model.MovieDetail
 import kotlinx.coroutines.launch

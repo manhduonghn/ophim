@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -15,13 +16,20 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        // ✅ Auto theo system dark/light
+        AppCompatDelegate.setDefaultNightMode(
+            AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        )
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         val recycler = findViewById<RecyclerView>(R.id.recyclerView)
-        
-        // 🔥 Thiết kế lại trang chủ dạng lưới 2 cột
-        recycler.layoutManager = GridLayoutManager(this, 2)
+
+        // ✅ Responsive: tablet sẽ nhiều cột hơn
+        val spanCount = if (resources.configuration.screenWidthDp > 600) 4 else 2
+        recycler.layoutManager = GridLayoutManager(this, spanCount)
 
         lifecycleScope.launch {
             try {
@@ -33,9 +41,14 @@ class MainActivity : AppCompatActivity() {
                     intent.putExtra("slug", movie.slug)
                     startActivity(intent)
                 }
+
             } catch (e: Exception) {
                 e.printStackTrace()
-                Toast.makeText(this@MainActivity, "Lỗi tải dữ liệu!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@MainActivity,
+                    "Lỗi tải dữ liệu!",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
