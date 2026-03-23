@@ -8,9 +8,9 @@
         android:id="@+id/tvEpisodeName"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:background="#444444"
         android:gravity="center"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/text_primary"
         android:textSize="14sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:background="@drawable/bg_episode"/>
 </FrameLayout>

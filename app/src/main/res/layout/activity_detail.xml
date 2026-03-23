@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212">
+    android:background="@color/bg">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -12,7 +12,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- ===== HEADER (layout ngang) ===== -->
+        <!-- ===== HEADER ===== -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -38,7 +38,7 @@
                     android:id="@+id/tvName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/text_primary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
@@ -47,7 +47,7 @@
                     android:id="@+id/tvInfo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="#BBBBBB"
+                    android:textColor="@color/text_secondary"
                     android:textSize="13sp"
                     android:layout_marginTop="6dp" />
 
@@ -59,19 +59,19 @@
                     android:layout_marginTop="12dp"
                     android:padding="10dp"
                     android:text="▶ Xem ngay"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@android:color/white"
                     android:textStyle="bold"
-                    android:background="#E50914"/>
+                    android:background="@color/accent"/>
             </LinearLayout>
         </LinearLayout>
 
-        <!-- ===== MÔ TẢ (không giới hạn) ===== -->
+        <!-- ===== MÔ TẢ ===== -->
         <TextView
             android:id="@+id/tvContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:textColor="#CCCCCC"
+            android:textColor="@color/text_secondary"
             android:textSize="14sp" />
 
         <!-- ===== SERVER ===== -->
@@ -79,14 +79,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Server"
-            android:textColor="@android:color/white"
+            android:textColor="@color/text_primary"
             android:textStyle="bold"
             android:layout_marginTop="20dp"/>
 
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="10dp"
+            android:overScrollMode="never">
 
             <LinearLayout
                 android:id="@+id/layoutServers"
@@ -101,7 +102,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Danh sách tập"
-            android:textColor="@android:color/white"
+            android:textColor="@color/text_primary"
             android:textStyle="bold"
             android:layout_marginTop="20dp"/>
 
