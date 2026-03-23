@@ -1,17 +1,32 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    
+
+    <!-- 🌗 Theme chính: tự động theo hệ thống -->
     <style name="Theme.OPhim" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#000000</item>
-        <item name="colorPrimaryVariant">#000000</item>
+        
+        <!-- Màu chính (Netflix style) -->
+        <item name="colorPrimary">#E50914</item>
+        <item name="colorPrimaryVariant">#B20710</item>
         <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="android:windowBackground">#121212</item>
+
+        <!-- ❌ QUAN TRỌNG: KHÔNG hardcode background -->
+        <!-- XÓA dòng windowBackground để dùng colors.xml -->
+        
+        <!-- Status bar -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+
     </style>
 
+
+    <!-- 🎬 Fullscreen player -->
     <style name="Theme.AppCompat.NoActionBar.FullScreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
+
+        <!-- Player luôn dark -->
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
     </style>
 
 </resources>
