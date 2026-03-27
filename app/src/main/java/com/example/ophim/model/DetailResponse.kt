@@ -1,5 +1,7 @@
 package com.example.ophim.model
 
+import com.google.gson.annotations.SerializedName
+
 data class DetailResponse(
     val status: String,
     val message: String?,
