@@ -30,6 +30,11 @@
             android:windowSoftInputMode="stateHidden" />
 
         <activity
+            android:name=".ui.FilterActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout" />
+
+        <activity
             android:name=".ui.DetailActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize|screenLayout" />
