@@ -14,6 +14,7 @@ data class DetailData(
 
 data class MovieDetail(
     val name: String,
+    val slug: String, // PHẢI CÓ DÒNG NÀY ĐỂ ĐỊNH DANH PHIM
     val content: String?,
     
     @SerializedName("poster_url")
@@ -48,7 +49,7 @@ data class Server(
 
 data class Episode(
     val name: String,
-    val slug: String,
+    val slug: String, // Slug của tập phim (ví dụ: "tap-1")
     
     @SerializedName("link_m3u8")
     val link_m3u8: String,
