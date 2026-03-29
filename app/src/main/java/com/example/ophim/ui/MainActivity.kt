@@ -32,19 +32,19 @@ class MainActivity : AppCompatActivity() {
         val btnLogo = findViewById<View>(R.id.btnLogoHome)
         val btnSearch = findViewById<View>(R.id.btnSearch)
         
-        // Menu Header
+        // Ánh xạ Menu từ layout_header
+        val menuHistory = findViewById<TextView>(R.id.menuHistory)
         val menuType = findViewById<TextView>(R.id.menuType)
         val menuCategory = findViewById<TextView>(R.id.menuCategory)
         val menuCountry = findViewById<TextView>(R.id.menuCountry)
 
         setupGrid()
 
+        // Sự kiện Click
         btnLogo.setOnClickListener { recycler.smoothScrollToPosition(0) }
-        btnSearch.setOnClickListener {
-            startActivity(Intent(this, SearchActivity::class.java))
-        }
-
-        // Sự kiện Menu
+        btnSearch.setOnClickListener { startActivity(Intent(this, SearchActivity::class.java)) }
+        
+        menuHistory.setOnClickListener { startActivity(Intent(this, HistoryActivity::class.java)) }
         menuType.setOnClickListener { showTypeMenu(it) }
         menuCategory.setOnClickListener { showFilterMenu(it, "CATEGORY") }
         menuCountry.setOnClickListener { showFilterMenu(it, "COUNTRY") }
@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@MainActivity, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Lỗi kết nối Server", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -86,8 +86,7 @@ class MainActivity : AppCompatActivity() {
         val popup = PopupMenu(this, view)
         Constants.MOVIE_TYPES.keys.forEach { popup.menu.add(it) }
         popup.setOnMenuItemClickListener { item ->
-            val path = Constants.MOVIE_TYPES[item.title] ?: ""
-            navigateToFilter(item.title.toString(), path)
+            navigateToFilter(item.title.toString(), Constants.MOVIE_TYPES[item.title] ?: "")
             true
         }
         popup.show()
@@ -96,22 +95,20 @@ class MainActivity : AppCompatActivity() {
     private fun showFilterMenu(view: View, type: String) {
         lifecycleScope.launch {
             try {
-                val response = if (type == "CATEGORY") RetrofitClient.api.getCategories() 
-                               else RetrofitClient.api.getCountries()
+                val response = if (type == "CATEGORY") RetrofitClient.api.getCategories() else RetrofitClient.api.getCountries()
                 val popup = PopupMenu(this@MainActivity, view)
                 response.data.items.forEach { popup.menu.add(it.name) }
                 popup.setOnMenuItemClickListener { menuItem ->
                     val selected = response.data.items.find { it.name == menuItem.title }
                     selected?.let {
-                        val path = if (type == "CATEGORY") "v1/api/the-loai/${it.slug}" 
-                                   else "v1/api/quoc-gia/${it.slug}"
+                        val path = if (type == "CATEGORY") "v1/api/the-loai/${it.slug}" else "v1/api/quoc-gia/${it.slug}"
                         navigateToFilter(it.name, path)
                     }
                     true
                 }
                 popup.show()
             } catch (e: Exception) {
-                Toast.makeText(this@MainActivity, "Lỗi tải danh mục", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "Không thể tải danh mục", Toast.LENGTH_SHORT).show()
             }
         }
     }
