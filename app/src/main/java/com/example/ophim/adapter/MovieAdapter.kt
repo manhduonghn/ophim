@@ -31,12 +31,17 @@ class MovieAdapter(
         h.name.text = m.name
         h.lang.text = m.lang ?: "HD"
 
-        // 🔥 SỬA LỖI IMG: Cấu trúc đúng là [Domain] + /uploads/movies/ + [thumb_url]
-        val fullImageUrl = "$base/uploads/movies/${m.thumb_url}"
+        // 🔥 FIX LỖI ẢNH: Kiểm tra nếu thumb_url đã là link full (từ lịch sử) thì dùng luôn
+        val fullImageUrl = if (m.thumb_url?.startsWith("http") == true) {
+            m.thumb_url
+        } else {
+            // Cấu trúc mặc định từ API: base + /uploads/movies/ + thumb_url
+            "${base.trimEnd('/')}/uploads/movies/${m.thumb_url}"
+        }
 
         Glide.with(h.itemView.context)
             .load(fullImageUrl)
-            .transition(DrawableTransitionOptions.withCrossFade()) // Hiệu ứng hiện ảnh mượt
+            .transition(DrawableTransitionOptions.withCrossFade())
             .placeholder(android.R.drawable.progress_horizontal)
             .error(android.R.drawable.stat_notify_error)
             .into(h.img)
