@@ -1,8 +1,24 @@
+package com.example.ophim.ui
+
 import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.ophim.adapter.MovieAdapter
+import com.example.ophim.api.RetrofitClient
+import com.example.ophim.databinding.ActivitySearchBinding
+import com.example.ophim.model.Movie
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class SearchActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySearchBinding
@@ -14,7 +30,7 @@ class SearchActivity : AppCompatActivity() {
     private var isLastPage = false
     private var isLoading = false
     private var currentKeyword = ""
-    private var searchJob: Job? = null // Dùng để quản lý Debounce
+    private var searchJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,11 +56,11 @@ class SearchActivity : AppCompatActivity() {
             } else false
         }
 
-        // TÍNH NĂNG GỢI Ý KHI GÕ (Debounce 500ms)
+        // Gợi ý khi gõ (Debounce)
         binding.edtSearch.addTextChangedListener { text ->
-            searchJob?.cancel() // Hủy bỏ đợt đợi trước đó
+            searchJob?.cancel()
             searchJob = lifecycleScope.launch {
-                delay(500) // Đợi 500ms sau khi người dùng ngừng gõ
+                delay(600) // Đợi người dùng dừng gõ 0.6s
                 val query = text.toString().trim()
                 if (query.isNotEmpty() && query != currentKeyword) {
                     performNewSearch()
@@ -80,7 +96,7 @@ class SearchActivity : AppCompatActivity() {
         currentPage = 1
         isLastPage = false
         movieList.clear()
-        movieAdapter = null // Tạo mới adapter để reset domain ảnh nếu cần
+        movieAdapter = null 
         executeSearch()
     }
 
@@ -93,9 +109,8 @@ class SearchActivity : AppCompatActivity() {
             try {
                 val res = RetrofitClient.api.search(currentKeyword, currentPage)
                 val newItems = res.data.items
-                
-                // Cập nhật trạng thái trang cuối
                 val pagin = res.data.params.pagination
+                
                 if (newItems.size < pagin.totalItemsPerPage) isLastPage = true
 
                 binding.tvSearchResult.apply {
@@ -119,7 +134,9 @@ class SearchActivity : AppCompatActivity() {
                     binding.tvSearchResult.text = "Không tìm thấy phim nào..."
                 }
             } catch (e: Exception) {
-                if (currentPage == 1) Toast.makeText(this@SearchActivity, "Lỗi kết nối", Toast.LENGTH_SHORT).show()
+                if (currentPage == 1) {
+                    Toast.makeText(this@SearchActivity, "Lỗi kết nối", Toast.LENGTH_SHORT).show()
+                }
             } finally {
                 isLoading = false
                 binding.progressBar.visibility = View.GONE
@@ -130,6 +147,6 @@ class SearchActivity : AppCompatActivity() {
     private fun hideKeyboard() {
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(binding.edtSearch.windowToken, 0)
-        binding.edtSearch.clearFocus() // Bỏ focus để không hiện con trỏ nhấp nháy
+        binding.edtSearch.clearFocus()
     }
 }
