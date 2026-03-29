@@ -2,6 +2,7 @@ package com.example.ophim.ui
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -37,17 +38,18 @@ class SearchActivity : AppCompatActivity() {
         binding = ActivitySearchBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupRecyclerView()
+        // 1. Khởi tạo Grid linh hoạt ngay từ đầu
+        setupResponsiveGrid()
 
         binding.btnBack.setOnClickListener { finish() }
 
-        // Nút tìm kiếm thủ công
+        // 2. Xử lý nút tìm kiếm thủ công
         binding.btnDoSearch.setOnClickListener {
             hideKeyboard()
             performNewSearch()
         }
 
-        // Xử lý nút Enter trên bàn phím
+        // 3. Xử lý Enter/Search trên bàn phím
         binding.edtSearch.setOnEditorActionListener { _, id, _ ->
             if (id == EditorInfo.IME_ACTION_SEARCH) {
                 hideKeyboard()
@@ -56,11 +58,11 @@ class SearchActivity : AppCompatActivity() {
             } else false
         }
 
-        // Gợi ý khi gõ (Debounce)
+        // 4. Logic Gợi ý (Debounce) khi đang gõ
         binding.edtSearch.addTextChangedListener { text ->
             searchJob?.cancel()
             searchJob = lifecycleScope.launch {
-                delay(600) // Đợi người dùng dừng gõ 0.6s
+                delay(600) // Đợi 0.6s sau khi ngừng gõ mới gọi API
                 val query = text.toString().trim()
                 if (query.isNotEmpty() && query != currentKeyword) {
                     performNewSearch()
@@ -68,6 +70,7 @@ class SearchActivity : AppCompatActivity() {
             }
         }
 
+        // 5. Cuộn để tải thêm trang
         binding.rvSearch.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
                 val lastVisible = layoutManager?.findLastVisibleItemPosition() ?: 0
@@ -79,10 +82,21 @@ class SearchActivity : AppCompatActivity() {
         })
     }
 
-    private fun setupRecyclerView() {
+    // Tự động cập nhật số cột khi xoay màn hình mà không cần load lại Activity
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        setupResponsiveGrid()
+    }
+
+    private fun setupResponsiveGrid() {
+        // Nếu chiều rộng > 600dp (Tablet/Ngang) thì 4 cột, ngược lại 2 cột
         val span = if (resources.configuration.screenWidthDp > 600) 4 else 2
-        layoutManager = GridLayoutManager(this, span)
-        binding.rvSearch.layoutManager = layoutManager
+        if (layoutManager == null) {
+            layoutManager = GridLayoutManager(this, span)
+            binding.rvSearch.layoutManager = layoutManager
+        } else {
+            layoutManager?.spanCount = span
+        }
     }
 
     private fun performNewSearch() {
@@ -93,6 +107,7 @@ class SearchActivity : AppCompatActivity() {
             binding.tvSearchResult.visibility = View.GONE
             return
         }
+        // Reset mọi thứ về trạng thái trang 1
         currentPage = 1
         isLastPage = false
         movieList.clear()
@@ -111,6 +126,7 @@ class SearchActivity : AppCompatActivity() {
                 val newItems = res.data.items
                 val pagin = res.data.params.pagination
                 
+                // Kiểm tra nếu đã hết phim để dừng phân trang
                 if (newItems.size < pagin.totalItemsPerPage) isLastPage = true
 
                 binding.tvSearchResult.apply {
@@ -131,11 +147,11 @@ class SearchActivity : AppCompatActivity() {
                         movieAdapter?.notifyDataSetChanged()
                     }
                 } else if (currentPage == 1) {
-                    binding.tvSearchResult.text = "Không tìm thấy phim nào..."
+                    binding.tvSearchResult.text = "Không tìm thấy phim phù hợp"
                 }
             } catch (e: Exception) {
                 if (currentPage == 1) {
-                    Toast.makeText(this@SearchActivity, "Lỗi kết nối", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SearchActivity, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show()
                 }
             } finally {
                 isLoading = false
