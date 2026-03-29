@@ -1,20 +1,8 @@
-package com.example.ophim.ui
-
-import android.content.Intent
-import android.content.res.Configuration
-import android.os.Bundle
-import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.ophim.adapter.MovieAdapter
-import com.example.ophim.api.RetrofitClient
-import com.example.ophim.databinding.ActivitySearchBinding
-import com.example.ophim.model.Movie
-import kotlinx.coroutines.launch
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
+import androidx.core.widget.addTextChangedListener
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
 class SearchActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySearchBinding
@@ -26,66 +14,90 @@ class SearchActivity : AppCompatActivity() {
     private var isLastPage = false
     private var isLoading = false
     private var currentKeyword = ""
+    private var searchJob: Job? = null // Dùng để quản lý Debounce
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySearchBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupResponsiveGrid()
+        setupRecyclerView()
 
         binding.btnBack.setOnClickListener { finish() }
-        binding.btnDoSearch.setOnClickListener { performNewSearch() }
+
+        // Nút tìm kiếm thủ công
+        binding.btnDoSearch.setOnClickListener {
+            hideKeyboard()
+            performNewSearch()
+        }
+
+        // Xử lý nút Enter trên bàn phím
         binding.edtSearch.setOnEditorActionListener { _, id, _ ->
-            if (id == EditorInfo.IME_ACTION_SEARCH) { performNewSearch(); true } else false
+            if (id == EditorInfo.IME_ACTION_SEARCH) {
+                hideKeyboard()
+                performNewSearch()
+                true
+            } else false
+        }
+
+        // TÍNH NĂNG GỢI Ý KHI GÕ (Debounce 500ms)
+        binding.edtSearch.addTextChangedListener { text ->
+            searchJob?.cancel() // Hủy bỏ đợt đợi trước đó
+            searchJob = lifecycleScope.launch {
+                delay(500) // Đợi 500ms sau khi người dùng ngừng gõ
+                val query = text.toString().trim()
+                if (query.isNotEmpty() && query != currentKeyword) {
+                    performNewSearch()
+                }
+            }
         }
 
         binding.rvSearch.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
-                if (!isLoading && !isLastPage) {
-                    val lastVisible = layoutManager?.findLastVisibleItemPosition() ?: 0
-                    if (lastVisible >= movieList.size - 4 && movieList.isNotEmpty()) {
-                        currentPage++
-                        executeSearch()
-                    }
+                val lastVisible = layoutManager?.findLastVisibleItemPosition() ?: 0
+                if (!isLoading && !isLastPage && lastVisible >= movieList.size - 4 && movieList.isNotEmpty()) {
+                    currentPage++
+                    executeSearch()
                 }
             }
         })
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        setupResponsiveGrid()
-    }
-
-    private fun setupResponsiveGrid() {
+    private fun setupRecyclerView() {
         val span = if (resources.configuration.screenWidthDp > 600) 4 else 2
-        if (layoutManager == null) {
-            layoutManager = GridLayoutManager(this, span)
-            binding.rvSearch.layoutManager = layoutManager
-        } else {
-            layoutManager?.spanCount = span
-        }
+        layoutManager = GridLayoutManager(this, span)
+        binding.rvSearch.layoutManager = layoutManager
     }
 
     private fun performNewSearch() {
         currentKeyword = binding.edtSearch.text.toString().trim()
-        if (currentKeyword.isEmpty()) return
-        currentPage = 1; isLastPage = false; movieList.clear(); movieAdapter = null
+        if (currentKeyword.isEmpty()) {
+            movieList.clear()
+            movieAdapter?.notifyDataSetChanged()
+            binding.tvSearchResult.visibility = View.GONE
+            return
+        }
+        currentPage = 1
+        isLastPage = false
+        movieList.clear()
+        movieAdapter = null // Tạo mới adapter để reset domain ảnh nếu cần
         executeSearch()
     }
 
     private fun executeSearch() {
+        if (isLoading) return
         isLoading = true
         binding.progressBar.visibility = View.VISIBLE
+        
         lifecycleScope.launch {
             try {
                 val res = RetrofitClient.api.search(currentKeyword, currentPage)
                 val newItems = res.data.items
-                val pagin = res.data.params.pagination
-
-                if (currentPage >= (pagin.totalItems / pagin.totalItemsPerPage + 1)) isLastPage = true
                 
+                // Cập nhật trạng thái trang cuối
+                val pagin = res.data.params.pagination
+                if (newItems.size < pagin.totalItemsPerPage) isLastPage = true
+
                 binding.tvSearchResult.apply {
                     visibility = View.VISIBLE
                     text = "Kết quả cho '$currentKeyword' - Trang $currentPage"
@@ -103,13 +115,21 @@ class SearchActivity : AppCompatActivity() {
                     } else {
                         movieAdapter?.notifyDataSetChanged()
                     }
+                } else if (currentPage == 1) {
+                    binding.tvSearchResult.text = "Không tìm thấy phim nào..."
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@SearchActivity, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show()
+                if (currentPage == 1) Toast.makeText(this@SearchActivity, "Lỗi kết nối", Toast.LENGTH_SHORT).show()
             } finally {
                 isLoading = false
                 binding.progressBar.visibility = View.GONE
             }
         }
+    }
+
+    private fun hideKeyboard() {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(binding.edtSearch.windowToken, 0)
+        binding.edtSearch.clearFocus() // Bỏ focus để không hiện con trỏ nhấp nháy
     }
 }
